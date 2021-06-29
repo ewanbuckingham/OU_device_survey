@@ -5,6 +5,18 @@ library(tidyverse)
 library(readr)
 library(ggplot2)
 
+questions <- tribble(
+  ~q_number, ~question,
+  "Q1", "Which of the following device types do you have access to?",
+  "Q2", "Of the devices you have identified in Q1, which do you use personally?",
+  "Q3", "Which do you use for study?",
+  "Q4", "Are there any reasons that currently prevent you from using the devices for study purposes?",
+  "Q5", "Which devices might you be interested in using for study in the future?"
+)
+
+
+
+
 # Load the complete dataset
 df <- read_rds("device_survey.rds")
 
@@ -57,17 +69,21 @@ df %>%
 
 # Chart removing the specified combinations devices owned.
 device_choice = c("Streaming device", "Laptop PC")
+device_number = 4
 question_choice = "Q1"
 
+question_selected <- questions %>% filter(q_number == question_choice)
+
 device_selected <- df %>%
-  filter(device %in% device_choice, answer, question %in% question_choice) %>%
-  select(response)
+  filter(device %in% device_choice,
+         answer, 
+         question %in% question_choice,
+         devices_owned == device_number)
 
-df_by_device <-df %>%
-  filter(!response %in% device_selected$response, question %in% question_choice)
 
-df_by_device %>%
+device_selected %>%
   group_by(survey, question, device) %>%
   summarise(answer = sum(as.integer(answer))) %>%
   ggplot(aes(x = as.Date(survey), y = answer, colour = device)) + 
-  geom_smooth(position="fill", stat="identity")
+  geom_smooth(position="fill", stat="identity") + 
+  labs(title = question_selected$question)
